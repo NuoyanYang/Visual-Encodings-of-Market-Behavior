@@ -1,0 +1,541 @@
+---
+main_topsize: 0.15 #percent coverage of the poster
+main_bottomsize: 0.1
+#ESSENTIALS
+title: '**Visual Encodings of Market Behavior: A Multi-View Exploration of Returns and Risks**'
+title_textsize: 85pt
+author:
+  - name: '**Nuoyan Yang**'
+    affil: 1
+    main: true
+    email: nuoyan.yang@uwaterloo.ca
+affiliation:
+  - num: 1
+    address: Faculty of Mathematics, University of Waterloo
+main_findings:
+  - "**Volatility**, **returns**, and **price trends** highlight risk and growth signals."
+logoleft_name: https&#58;//media.warriortrading.com/2020/01/shutterstock_1159552885.jpg
+logoright_name: https&#58;//tradebrains.in/wp-content/uploads/2023/11/Best-Financial-Markets-To-Trade-in-2024-Cover-Image-1080x675.jpg
+logocenter_name: https&#58;//raw.githubusercontent.com/brentthorne/posterdown/master/images/qr-code-black.png
+output: 
+  posterdown::posterdown_betterport:
+    self_contained: true
+    css: style.css
+    pandoc_args: --mathjax
+    mathjax: default
+    number_sections: false
+# bibliography: packages.bib
+link-citations: true
+primary_colour: "#00008B"
+secondary_colour: "#ADD8E6"
+# sectitle_bgcol: "#00bbd6"
+# sectitle_textcol: "#00bcd4"
+font_family: "Computer Modern"
+---
+
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      tidy = FALSE,
+                      message = FALSE,
+                      fig.align = 'center',
+                      out.width = "100%")
+options(knitr.table.format = "html") 
+```
+
+```{r, include=FALSE, eval=FALSE}
+knitr::write_bib(c('posterdown', 'rmarkdown','pagedown'), 'packages.bib')
+```
+
+# Introduction
+Investors and analysts often face challenges when interpreting stock performance due to market volatility and rapid shifts. To address this, we present a comprehensive analysis of four influential tech companies, which are Apple (AAPL), Tesla (TSLA), Meta (META), and Microsoft (MSFT) starting from <u>2024</u>. Using normalized price trends, volatility metrics, monthly returns, and compelling visualizations, this poster simplifies complex patterns and uncovers key performance signals. Together, these metrics provide a clearer view of relative growth, stability, and risk across leading tech stocks. This multi-view approach supports more informed decision-making in fast-moving financial environments.
+
+### 📈 (Option 3 - Base-100 Index)
+# Market Overview 
+We begin by normalizing stock prices to facilitate interactive meaningful comparisons.
+
+```{r o3, echo=FALSE, fig.cap='Normalized adjusted prices indexed to 100 at the starting date, allowing intuitive comparison of relative growth across tech stocks. [Reference Link](https://towardsdatascience.com/monitoring-stock-performance-made-easy-with-r-and-shiny-b6ab5fb02085/)', fig.height=6, out.width="100%"}
+library(tidyquant)
+library(ggplot2)
+library(dplyr)
+library(plotly)
+
+symbols = c("AAPL", "META", "TSLA", "MSFT")
+start_date = "2024-01-01"
+end_date = Sys.Date()
+
+# Get stock data
+stock_data = tq_get(symbols, from = start_date, to = end_date)
+
+## Used for Manim
+# write.csv(stock_data, "stock_data.csv")
+
+# OPTION 3
+# Define the color map
+# Same with the colors in Manim
+color_map = c(
+  "AAPL" = "#1F77B4",
+  "META" = "#FF7F0E",
+  "TSLA" = "#F0E442",
+  "MSFT" = "#CC79A7"
+)
+
+breaks_monthly = seq(
+  from = as.Date("2024-01-01"),
+  to = max(stock_data$date),
+  by = "3 month"
+)
+
+# Adjusted stock price is used, which is defined as: 
+# at the close of trading adjusted for stock splits, in USD
+plot_o3 = stock_data |> 
+  group_by(symbol) |> 
+  mutate(init_close = if_else(date == min(date), close, NA_real_)) |> 
+  mutate(value = round(100 * close / sum(init_close, na.rm=T), 1)) |> 
+  ungroup() |> 
+  ggplot(aes(date, value,colour = symbol)) +
+  geom_line(linewidth = 1, alpha = .9) +
+  scale_colour_manual(values = color_map) +
+  scale_x_date(breaks = breaks_monthly, date_labels = "%Y-%m") +
+  # 04-09 tariff pause for 90 days?
+  # geom_vline(xintercept = as.Date(c("2025-04-09")), 
+  # linetype = "dashed", color = "black") +
+  # uncomment the line below to show area under curves
+  # geom_area(aes(fill=symbol),position="identity",alpha=.2) +
+  geom_hline(yintercept = 100, 
+             linetype = "dotdash", 
+             color = "grey70") +
+  theme_light(base_size=20) +
+  theme(axis.title=element_blank(),
+        plot.background = element_rect(fill = "white"),
+        panel.background = element_rect(fill = "white"),
+        panel.grid = element_blank(),
+        legend.text = element_text(colour="black", size = 20),
+        legend.position = "bottom",
+        text = element_text(family = "Computer Modern")) + 
+  labs(title = "Adjusted Close Price Over Time (Interactive)",
+       x = "Date", y = "Price (USD)",
+       colour = "Company")
+
+ggplotly(plot_o3) |> 
+  layout(
+    legend = list(
+      orientation = "h",
+      x = 0.5,        # Center legend along x
+      y = -0.1,       # Move slightly below the plot
+      xanchor = "center",
+      yanchor = "top" 
+    ), 
+    annotations = list(
+            list(
+                text = "Indexed to 100 on 2024-01-01 to compare relative performance",
+                font = list(
+                    size = 18,
+                    color = 'grey'
+                ),
+                showarrow = FALSE,
+                align = 'center',
+                x = 0,
+                y = 1.06,  # Slightly below title
+                xref = 'paper',
+                yref = 'paper'
+            )
+        )
+    )
+# Advantage: Compare their percentage change directly on the same scale
+```
+The base-100 index method sets each stock's starting price to 100, simplifying comparisons across stocks regardless of their initial price differences and providing foundational insights. By doing so, we can immediately identify distinct trajectories: Meta's early growth versus Tesla’s fluctuating performance. Notably, Microsoft’s and Apple’s steady upward trends contrast with Tesla’s sharp ups and downs, revealing differences in stability among these stocks. This chart also captures the surge in volatility that emerged as a direct response to the "trade war." Such normalized comparisons are fundamental for quickly assessing relative performance and identifying notable turning points.
+
+### 🔄 (Option 1 - 30-Day Rolling)
+# Volatility and Returns 
+We then move beyond simple price tracking to dig into the risks and returns underlying these trends.
+
+```{r o1_notuse1, echo=FALSE, eval=FALSE, fig.cap='Scatter plot showing short-term return versus volatility, where return is defined as 30-day rolling mean of daily returns over a 30-day window and volatility is the standard deviation of daily returns over a 30-day window. Point size = trading volume; color = adjusted close price.', fig.height=6, out.width="100%"}
+### Not use, since too many points overlap in the scatter plot,
+### causing visual clutter
+
+library(scales)
+
+# OPTION 1
+# Calculate daily returns
+returns_data = stock_data |> 
+  group_by(symbol) |> 
+  tq_transmute(select = adjusted,
+               mutate_fun = periodReturn,
+               period = "daily") |> 
+  rename(daily_return = daily.returns)
+
+# Join back with volume for volatility
+merged_data = stock_data |> 
+  left_join(returns_data, by = c("symbol", "date")) |> 
+  na.omit() |>
+  group_by(symbol) |> 
+  arrange(date) |> 
+  mutate(
+    vol_30 = rollapply(daily_return, width = 30, FUN = sd, 
+                       fill = NA, align = "right"),
+    return_30 = rollapply(daily_return, width = 30, FUN = mean, 
+                          fill = NA, align = "right")
+  )
+
+# Scatter plot
+pl_o1 = ggplot(merged_data, aes(x = return_30, y = vol_30, 
+                              color = adjusted, size = volume)) +
+  geom_point(alpha = 0.3, 
+             position = position_jitter(width = 0.005, height = 0.005)) +
+  scale_color_viridis_c() +
+  scale_size(range = c(0.5, 5), 
+             labels = label_number(scale_cut = cut_short_scale())) +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1)) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,0.1)) +
+  facet_wrap(~symbol, scales = "fixed") +
+  labs(title = "30-Day Rolling Returns vs. Volatility",
+       subtitle = "X-axis = average gains/losses;
+       Y-axis = price stability.",
+       x = "30-Day Rolling Return",
+       y = "30-Day Rolling Volatility",
+       color = "Adjusted Close Price (USD)",
+       size = "Volume") +
+  theme_minimal(base_size=16) + 
+  theme(legend.position = "bottom", 
+        legend.key.width = unit(1, "cm"),
+        legend.box = "vertical",
+        text = element_text(family = "serif"))  
+# Latin Modern Roman , "serif" 
+pl_o1
+
+# Each dot = one day
+# horizontally = how much it was gaining/losing on average
+# vertically = how wild or stable the movement was
+```
+
+```{r o1_notuse2, echo=FALSE, eval=FALSE, fig.cap='Hexbin plots showing short-term return versus volatility, where return is the 30-day rolling mean of daily returns and volatility is the 30-day rolling standard deviation.', fig.height=6, out.width="100%"}
+### NOT USE; since the space of the poster, 
+### it is hard to put those two plots together
+library(scales)
+
+returns_data = stock_data |> 
+  group_by(symbol) |> 
+  tq_transmute(select = adjusted,
+               mutate_fun = periodReturn,
+               period = "daily") |> 
+  rename(daily_return = daily.returns)
+
+# Join back with volume for volatility
+merged_data = stock_data |> 
+  left_join(returns_data, by = c("symbol", "date")) |> 
+  na.omit() |>
+  group_by(symbol) |> 
+  arrange(date) |> 
+  mutate(
+    vol_30 = rollapply(daily_return, width = 30, FUN = sd, 
+                       fill = NA, align = "right"),
+    return_30 = rollapply(daily_return, width = 30, FUN = mean, 
+                          fill = NA, align = "right")
+  )
+
+p_vol = merged_data |>
+  filter(is.finite(return_30), is.finite(vol_30), is.finite(volume)) |>
+  ggplot(aes(x = return_30, y = vol_30)) +
+  stat_summary_hex(aes(z = volume), bins = 40, fun = median) +
+  facet_wrap(~symbol, nrow = 2) +
+  scale_fill_viridis_c(name = "Trade Volume", option = "plasma",
+                       labels = label_number(scale_cut = cut_short_scale())) +
+  scale_x_continuous(labels = percent_format(accuracy = 1)) +
+  scale_y_continuous(labels = percent_format(accuracy = 1), limits = c(0, 0.1)) +
+  labs(title = "Median Trade Volume by Return – Volatility",
+       x = "30-Day Rolling Return", y = "30-Day Rolling Volatility") +
+  theme_minimal(base_size = 16) +
+  theme(
+    legend.position = "bottom",
+    legend.key.width = unit(1.2, "cm"),
+    strip.text = element_text(face = "bold"),
+    text = element_text(family = "serif")
+  )
+
+p_price = merged_data |>
+  filter(is.finite(return_30), is.finite(vol_30), is.finite(adjusted)) |>
+  ggplot(aes(x = return_30, y = vol_30)) +
+  stat_summary_hex(aes(z = adjusted), bins = 40, fun = median) +
+  facet_wrap(~symbol, nrow = 2) +
+  scale_fill_viridis_c(name = "Adjusted Close Price (USD)", option = "viridis") +
+  scale_x_continuous(labels = percent_format(accuracy = 1)) +
+  scale_y_continuous(labels = percent_format(accuracy = 1), limits = c(0, 0.1)) +
+  labs(title = "Median Adjusted Price by Return – Volatility",
+       x = "30-Day Rolling Return", y = "30-Day Rolling Volatility") +
+  theme_minimal(base_size = 16) +
+  theme(
+    legend.position = "bottom",
+    legend.key.width = unit(1.2, "cm"),
+    strip.text = element_text(face = "bold"),
+    text = element_text(family = "serif")
+  )
+
+library(patchwork)
+
+combined_plot = p_vol / p_price +
+  plot_layout(heights = c(1, 1)) +
+  plot_annotation(
+    title = "Return–Volatility Space Colored by Median Volume and Price",
+    theme = theme(plot.title = element_text(face = "bold", size = 18, family = "serif"))
+  )
+
+combined_plot
+```
+
+```{r o1, echo=FALSE, fig.cap='Hexbin plot showing 30-day rolling return vs. volatility, colored by median adjusted close price. Brighter regions reflect higher price levels tied to specific risk–return combinations.', fig.height=7, out.width="100%"}
+library(viridis)
+library(scales)
+
+# OPTION 1
+# Calculate daily returns
+returns_data = stock_data |> 
+  group_by(symbol) |> 
+  tq_transmute(select = adjusted,
+               mutate_fun = periodReturn,
+               period = "daily") |> 
+  rename(daily_return = daily.returns)
+
+# Join back with volume for volatility
+merged_data = stock_data |> 
+  left_join(returns_data, by = c("symbol", "date")) |> 
+  na.omit() |>
+  group_by(symbol) |> 
+  arrange(date) |> 
+  mutate(
+    vol_30 = rollapply(daily_return, width = 30, FUN = sd, 
+                       fill = NA, align = "right"),
+    return_30 = rollapply(daily_return, width = 30, FUN = mean, 
+                          fill = NA, align = "right")
+  )
+
+# Adjusted Close Price Hexbin Plot (2x2 layout)
+p_price = merged_data |>
+  filter(is.finite(return_30), is.finite(vol_30), is.finite(adjusted)) |>
+  ggplot(aes(x = return_30, y = vol_30)) +
+  stat_summary_hex(aes(z = adjusted), bins = 40, fun = median) +
+  facet_wrap(~symbol, nrow = 2) +
+  scale_fill_viridis_c(name = "Median Adjusted Close Price (USD)", 
+                       option = "viridis") +
+  scale_x_continuous(labels = percent_format(accuracy = 1)) +
+  scale_y_continuous(labels = percent_format(accuracy = 1), limits = c(0, 0.08)) +
+  labs(title = "30-Day Rolling Returns vs. Volatility",
+       subtitle = "X-axis = average gains/losses; Y-axis = price stability",
+       x = "30-Day Rolling Return",
+       y = "30-Day Rolling Volatility") +
+  theme_minimal(base_size = 16) +
+  theme(
+    legend.position = "bottom",
+    legend.key.width = unit(1.2, "cm"),
+    strip.text = element_text(face = "bold"),
+    text = element_text(family = "serif")
+  )
+# ggsave("adjusted_price_hexbin.png", p_price, width = 10, height = 8, dpi = 300)
+
+p_price
+```
+
+To further interpret stock price behavior, we analyze 30-day rolling returns and volatility. Rolling returns, computed as the average daily return over a 30-day window, capture short-term performance trends. Volatility, measured as the standard deviation of daily returns, reflects how much a stock’s price fluctuates, indicating its risk level.
+By plotting return against volatility and coloring each region by the median adjusted closing price, we highlight how price levels vary across different short-term risk-return profiles. For instance, higher-priced zones under low volatility (e.g., MSFT) may signal stable growth, while price dispersion across a wider risk band (e.g., TSLA) reflects more uncertain, risk-driven valuations.
+
+### 🧠 (Option 6 - Manim Visualization)
+# Summary of Recent Trends 
+To summarize recent price dynamics vividly, we continue with an engaging visualization.
+
+```{r o6, eval=FALSE, echo=FALSE, fig.cap="3-month adjusted close prices of META, MSFT, TSLA, and AAPL. Red and green markers indicate daily price movement direction. Zigzag line in y-axis is used for readability.", out.width = '95%'}
+# not used
+knitr::include_graphics("o6.png")
+```
+
+We use a creatively animated visualization with fancy elements to capture recent stock price movements over the past three months. Unlike traditional charts, this stylized representation makes complex information visually appealing and memorable. This animation visually tracks short-term price trajectories, using motion and color to highlight daily ups and downs. This dynamic view draws attention to emerging patterns and reinforces recent momentum shifts with clarity and impact.
+
+💡 *Did You Know?*
+
+In April 2025, global stock markets faced their biggest drop since the COVID-19 pandemic. Within two days, the S\&P 500 lost over 10\% of its value after U.S. tariffs were imposed and rising trade tensions. [Reference Link](https://en.wikipedia.org/wiki/2025_stock_market_crash#:~:text=Within%20two%20days%2C%20the%20Dow,points%20consecutively%20over%20multiple%20days.)
+
+<figure style="text-align: center;">
+  <video width="100%" height="auto" controls>
+    <source src="manim_anim.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <figcaption>Figure 3: 3-month adjusted close prices of META, MSFT, TSLA, and AAPL. Red and green markers indicate daily price movement direction. Zigzag line in y-axis is used for readability.</figcaption>
+</figure>
+
+### 📋 (Option 5 - Heatmap Table)
+# Monthly Breakdown 
+To provide even greater detail, we break down this performance further into monthly returns.
+
+The color-coded table visually identifies periods of outperformance and underperformance for each company. Bold is used to highlight the single best-performing stock each month. This visual approach immediately clarifies temporal patterns, showcasing how monthly outcomes relate to volatility observations: Tesla’s exceptional returns in certain months correlate with its higher volatility profile. 
+
+```{r gttable, echo=FALSE}
+library(tidyr)
+library(gt) 
+library(lubridate)   
+
+stock_last_year = stock_data |> 
+  filter(date >= Sys.Date() - years(1)) 
+
+# Compute monthly returns
+# How much the stock's price changed over that month, 
+# as a percentage of its starting value.
+monthly_returns = stock_last_year |> 
+  group_by(symbol) |> 
+  tq_transmute(select = adjusted,
+               mutate_fun = periodReturn,
+               period = "monthly",
+               type = "arithmetic") |> 
+  mutate(month = format(date, "%Y-%m")) |> 
+  select(symbol, month, monthly_return = monthly.returns) |> 
+  pivot_wider(names_from = symbol, values_from = monthly_return) 
+
+# Cumulative Returns row
+summary_row = monthly_returns |> 
+  select(-month) |> 
+  summarise(across(everything(), 
+                   ~ round((prod(1 + .x, na.rm = TRUE) - 1), 4))) |> 
+  mutate(month = "Cumulative Returns") |> 
+  select(month, everything())
+
+# Dynamically calculate the range of return values
+value_range = monthly_returns |>
+  select(where(is.numeric)) |>
+  range(na.rm = TRUE)
+
+monthly_returns_with_summary = bind_rows(monthly_returns, summary_row)
+
+# Identify the max column per row (by column name)
+highlight_cells = monthly_returns_with_summary |>
+  rename(Month = month) |>
+  rowwise() |>
+  mutate(
+    max_col = names(across(where(is.numeric)))[which.max(c_across(where(is.numeric)))]
+  ) |>
+  ungroup()
+
+### Color-coded based on the returns for each company
+# Red means loss and green means gain
+gt_tbl = highlight_cells |>
+  select(-max_col) |>
+  gt() |>
+  tab_header(
+    title = md("**Monthly Stock Returns Over the Past 12-Month**"),
+    subtitle = md("*Color-coded by return level per company;
+                  bolded cells show the top-performing stock for each month*")
+  ) |>
+  fmt_percent(columns = where(is.numeric), decimals = 2) |>
+  data_color(
+    columns = where(is.numeric),
+    fn = scales::col_numeric(
+      palette = c("red", "white", "darkgreen"),
+      domain = value_range
+    )
+  )
+
+
+### Bold the Max Return Per Row
+# Apply bold conditionally, one column at a time
+for (col in names(monthly_returns)[-1]) {
+  gt_tbl = gt_tbl |>
+    tab_style(
+      style = cell_text(weight = "bold"),
+      locations = cells_body(
+        columns = all_of(col),
+        rows = highlight_cells$max_col == col &
+               highlight_cells$Month != "Cumulative Returns"
+      )
+    )  
+}
+
+# Change the general table style
+gt_o5 = gt_tbl |> 
+  tab_style(
+    style = cell_borders(
+      sides = "all",
+      color = "gray80",
+      weight = px(1)),
+    locations = cells_body()) |>
+  tab_style(
+    style = list(
+      cell_text(weight = "bold", color = "black"),
+      cell_fill(color = "#f2f2f2")),
+      locations = cells_column_labels()) |>
+  tab_style(style = cell_fill(color = "white"),  # or "#FFFFFF"
+    locations = cells_body(columns = Month)) |>
+  tab_style(style = list(cell_text(weight = "bold", color = "black"),
+                        cell_fill(color = "#FFFAD280")),
+    locations = cells_body(rows = Month == "Cumulative Returns")) |> 
+  tab_style(style = cell_text(align = "center"),
+    locations = cells_column_labels(everything())) |>
+  tab_style(style = cell_text(align = "center"),
+    locations = cells_body(columns = everything()))|>
+  tab_options(table.width = pct(95),
+              table.font.size = px(26)) |>
+  tab_source_note(source_note = md("Data source: Yahoo Finance,
+                                    processed with tidyquant")) |>
+  tab_footnote(footnote = md("Cumulative Returns = $\\left(\\prod_{i=1}^n (1 + \\text{monthlyReturn}_i)\\right) - 1$"),
+    cells_body(columns = Month, rows = Month == "Cumulative Returns"))
+
+
+gt_o5_fc = opt_table_font(
+  data = gt_o5,
+  font = list("Computer Modern")
+)
+# Latin Modern Roman , "serif" 
+gt_o5_fc
+```
+
+```{r}
+library(gt)
+library(gtExtras)
+
+# Build one-row table where every stock column is a vector (list)
+spark_row = monthly_returns |>
+  select(-month) |>
+  summarise(across(everything(), \(x) list(x))) |>
+  mutate(Month = "Monthly Trend") |>
+  select(Month, everything())        # Keep Month first
+
+stock_cols = setdiff(names(spark_row), "Month")
+
+# Render sparklines for every stock column
+gt_spark = gt(spark_row)
+
+for (sym in stock_cols) {
+  gt_spark = gt_spark |>
+    gt_plt_sparkline({{sym}}, same_limit = TRUE)
+}
+
+gt_spark = gt_spark |>
+   tab_header(
+    title = md("**Monthly Stock Return Trends Over the Past 12-Month**"),
+    subtitle = "Each sparkline shows monthly return trajectory"
+  )  |>
+  cols_label(Month = "") |>
+  tab_style(
+  style = list(cell_text(weight = "bold", color = "black"),
+               cell_fill(color = "#FFFAD2")),
+  locations = cells_body(rows = Month == "Cumulative Returns")) |>
+  tab_style(
+    style = list(
+      cell_text(weight = "bold", color = "black"),
+      cell_fill(color = "#f2f2f2")),
+      locations = cells_column_labels()) |>
+  opt_table_font(font = list("Computer Modern")) |>
+  tab_options(table.width = pct(95),
+              table.font.size = px(26)) |>
+  tab_style(
+    style = list(cell_text(weight = "bold", color = "black")),
+    locations = cells_body(rows = Month == "Monthly Trend"))
+
+gt_spark
+```
+
+The sparklines reveals shifts in monthly return momentum for each ticker and their link to volatility.
+
+# Conclusion
+- Comprehensive View: Diverse visualizations collectively reveal a broad picture of recent tech stock performance.
+
+- Layered Analyses: Sequential methods from normalized price comparisons and rolling return-volatility studies to monthly breakdowns and innovative visual storytelling.
+
+- Future Directions: Expanding to broader market sectors or extending the timeframe can further generate insights.

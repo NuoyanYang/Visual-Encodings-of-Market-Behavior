@@ -1,0 +1,37 @@
+/* Poster style changes*/
+
+/* Setting for two bottom images - make sure the size and position*/
+#main-img-left {
+    width: auto !important;
+    height: auto;         
+    display: block;
+    margin: auto;        
+    object-fit: contain;  
+    border-radius: 8px;   
+  }
+
+#main-img-right {
+    width: 19% !important;
+    height: auto;        
+    display: block;
+    margin: auto;         
+    object-fit: contain;  
+    border-radius: 8px;  
+  } 
+
+/* Add border for the top and bottom colored rect */
+.main {
+    border-radius: 30px;
+}
+
+.main_bottom {
+    border-radius: 30px;
+}
+
+/* Setting for the Manim animation video caption */
+/* Ensure that the caption styles remain consistent throughout */
+figcaption {
+  font-size: 20pt;
+  font-style: italic;
+  padding-top: 0
+}
